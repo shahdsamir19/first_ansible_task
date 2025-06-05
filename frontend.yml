@@ -1,0 +1,36 @@
+---
+- name: Configure Frontend Server
+  hosts: frontend
+  become: true
+  tasks:
+    - name: Check memory
+      fail:
+        msg: "Not enough memory!"
+      when: ansible_memtotal_mb < 1024
+
+    - name: Install NGINX on Ubuntu
+      apt:
+        name: nginx
+        state: present
+      when: ansible_distribution == "Ubuntu"
+      notify: Restart nginx
+
+    - name: Install common packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - vim
+        - curl
+        - git
+
+    - name: Deploy simple HTML page
+      copy:
+        content: "<h1>Hello from Ansible</h1>"
+        dest: /var/www/html/index.html
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
